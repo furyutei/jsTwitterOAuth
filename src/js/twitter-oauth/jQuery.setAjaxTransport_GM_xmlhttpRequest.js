@@ -56,6 +56,8 @@ This script is based on
 
 'use strict';
 
+var VERSION = '0.1.1';
+
 
 function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
     if ( ! dataType ) {
@@ -301,10 +303,14 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
         return $;
     }
     
-    $.extend( {
-        setAjaxTransport_GM_xmlhttpRequest : function ( dataType ) {
+    var extend_function = function ( dataType ) {
             setAjaxTransport_GM_xmlhttpRequest( $, dataType );
-        }
+        };
+    
+    extend_function.version = VERSION;
+    
+    $.extend( {
+        setAjaxTransport_GM_xmlhttpRequest : extend_function
     } );
     
     return $;
