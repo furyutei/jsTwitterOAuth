@@ -259,6 +259,10 @@ var set_values = ( function () {
                 $promise = $deferred.promise(),
                 name_value_map = {};
             
+            if ( typeof name_list == 'string' ) {
+                name_list = [ name_list ];
+            }
+            
             name_list.forEach( function ( name ) {
                 name_value_map[ name ] = get_value( name );
             } );
@@ -312,11 +316,15 @@ var set_values = ( function () {
             };
         } )(); // end of remove_value()
         
-        return function ( name_value_map, callback ) {
+        return function ( name_list,  callback ) {
             var $deferred = new $.Deferred(),
                 $promise = $deferred.promise();
             
-            Object.keys( name_value_map ).forEach( function ( name ) {
+            if ( typeof name_list == 'string' ) {
+                name_list = [ name_list ];
+            }
+            
+            name_list.forEach( function ( name ) {
                 remove_value( name );
             } );
             
@@ -425,7 +433,14 @@ var TemplateTwitterAPI = {
     authenticate : function ( options ) {
         var self = this,
             $deferred = new $.Deferred(),
-            $promise = $deferred.promise(),
+            $promise = $deferred.promise();
+        
+        if ( ! options ) {
+            options = {};
+        }
+        
+        var force_login = ( typeof options.force_login != 'undefined' ) ? options.force_login : false,
+            use_cache = ( ( ! force_login ) && ( typeof options.use_cache != 'undefined' ) ) ? options.use_cache : self.config.use_cache,
             
             popup = function () {
                 var post_parameters = {
@@ -475,8 +490,21 @@ var TemplateTwitterAPI = {
                         popup_window_top = Math.floor( window.screenY + ( window.outerHeight - popup_window_height ) / 8 );
                         popup_window_left = Math.floor( window.screenX + ( window.outerWidth - popup_window_width ) / 2 );
                         
-                        var initial_popup_url = self.config.api_url_base + '/oauth/authenticate?oauth_token=' + self.config.oauth_token +
-                                ( ( self.config.screen_name ) ? ( '&screen_name=' + encodeURIComponent( self.config.screen_name ) ) : '' ),
+                        var authenticate_params = {
+                                oauth_token : self.config.oauth_token
+                            };
+                        
+                        if ( force_login ) {
+                            authenticate_params.force_login = 'true';
+                        }
+                        
+                        if ( self.config.screen_name ) {
+                            authenticate_params.screen_name = self.config.screen_name;
+                        }
+                        
+                        var initial_popup_url = self.config.api_url_base + '/oauth/authenticate?' + Object.keys( authenticate_params ).map( function ( name ) {
+                                    return name + '=' + encodeURIComponent( authenticate_params[ name ] );
+                                } ).join( '&' ),
                             parent_origin = get_origin( location.href ),
                             popup_origin_api = get_origin( self.config.api_url_base ),
                             popup_origin_login_verification = get_origin( self.config.login_verification_url ),
@@ -628,12 +656,6 @@ var TemplateTwitterAPI = {
                 } );
             };
             
-        
-        if ( ! options ) {
-            options = {};
-        }
-        
-        var use_cache = ( typeof options.use_cache != 'undefined' ) ? options.use_cache : self.config.use_cache;
         
         if ( use_cache ) {
             self.isAuthenticated()
