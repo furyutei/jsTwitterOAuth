@@ -33,7 +33,7 @@ jsTwitterOAuth
 
 [Tampermonkey](http://tampermonkey.net/)導入済みのブラウザ（Google Chrome / Firefox）にて、  
 
-> [サンプルユーザースクリプト](https://furyutei.work/userjs/furyutei/example-twitter-oauth.user.js)
+> [サンプルユーザースクリプト](https://furyutei.github.io/jsTwitterOAuth/src/js/example-twitter-oauth.user.js)  
 
 にアクセスし、インストール。  
 
