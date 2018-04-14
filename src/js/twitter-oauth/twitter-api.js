@@ -124,11 +124,41 @@ is also referenced.
 
 'use strict';
 
-if ( typeof browser == 'undefined' ) { window.browser = ( typeof chrome != 'undefined' ) ? chrome : null; }
+( function ( factory ) {
+    if ( ( typeof define == 'function' ) && ( define.amd ) ) {
+        // AMD. Register as anonymous module.
+        define( [], factory );
+    }
+    else if ( ( typeof exports == 'object' ) && ( typeof module != 'undefined' ) ) {
+        // CommonJS
+        module.exports = factory();
+    }
+    else {
+        // Browser globals.
+        var global_object;
+        
+        if ( typeof window != 'undefined' ) {
+            global_object = window;
+        }
+        else if ( typeof global != 'undefined' ) {
+            global_object = global;
+        }
+        else if ( typeof self != 'undefined' ) {
+            global_object = self;
+        }
+        else {
+            global_object = this;
+        }
+        
+        global_object.Twitter = factory();
+    }
+} )( function () {
 
-var based = ( typeof exports != 'undefined' ) ? exports : window,
-    
-    set_values = ( function () {
+if ( ( typeof browser == 'undefined' ) && ( typeof window != 'undefined' ) ) {
+    window.browser = ( typeof chrome != 'undefined' ) ? chrome : null;
+}
+
+var set_values = ( function () {
         if ( browser &&  browser.storage ) {
             return function ( name_value_map, callback ) {
                 var $deferred = new $.Deferred(),
@@ -714,7 +744,7 @@ var TemplateTwitterAPI = {
                     $deferred.reject( 'screen_name mismatch' );
                     return;
                 }
-                $deferred.resolve( 'OK' );
+                $deferred.resolve( json );
             } )
             .fail( function () {
                 self.logout()
@@ -1076,7 +1106,8 @@ var TemplateTwitterAPI = {
     
 }; // end of TemplateTwitterAPI
 
+return object_extender( TemplateTwitterAPI );
 
-based.Twitter = object_extender( TemplateTwitterAPI );
+} );
 
 } )();
