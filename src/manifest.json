@@ -1,0 +1,27 @@
+{
+    "manifest_version" : 2,
+    "name" : "example-twitter-oauth",
+    "version" : "0.1.1",
+    "description" : "Browser Extension Twitter OAuth Example",
+    "author" : "furyu",
+    "permissions": [ "storage", "*://api.twitter.com/*" ],
+    "content_scripts" : [
+        {
+            "matches" : [
+                "*://furyutei.github.io/jsTwitterOAuth/example/*",
+                "*://api.twitter.com/oauth/*", 
+                "*://twitter.com/account/*",
+                "*://furyutei.github.io/jsTwitterOAuth/callback/*"
+            ],
+            "js" : [
+                "js/jquery.min.js",
+                "js/twitter-oauth/sha1.js",
+                "js/twitter-oauth/oauth.js",
+                "js/twitter-oauth/twitter-api.js",
+                "js/example-twitter-oauth.user.js"
+            ],
+            "run_at" : "document_end",
+            "all_frames" : false
+        }
+    ]
+}
