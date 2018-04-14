@@ -610,14 +610,14 @@ var TemplateTwitterAPI = {
                                 }
                                 
                                 if ( ! session ) {
-                                    $deferred.reject( 'Authorization failure' );
+                                    $deferred.reject( 'Authorization failure (process interrupted)' );
                                     return;
                                 }
                                 
                                 var session_params = self.deparam( session );
                                 
                                 if ( typeof session_params.denied != 'undefined' ) {
-                                    $deferred.reject( 'Authorization refused' );
+                                    $deferred.reject( 'Authorization refused', session_params );
                                     return;
                                 }
                                 
@@ -640,11 +640,11 @@ var TemplateTwitterAPI = {
                                         } );
                                     } )
                                     .fail( function ( error ) {
-                                        $deferred.reject( 'Authorization failure (oauth/access_token) : ' + error );
+                                        $deferred.reject( 'Authorization failure (oauth/access_token) : ' + error, tokens );
                                     } );
                                 } )
                                 .fail( function ( result ) {
-                                    $deferred.reject( 'Authorization failure (oauth/access_token)' );
+                                    $deferred.reject( 'Authorization failure (oauth/access_token)', session_params );
                                 } );
                             };
                         
@@ -652,17 +652,15 @@ var TemplateTwitterAPI = {
                     } );
                 } )
                 .fail( function ( result ) {
-                    $deferred.reject( 'Authorization failure (oauth/request_token)' );
+                    $deferred.reject( 'Authorization failure (oauth/request_token)', post_parameters.parameters );
                 } );
             };
             
         
         if ( use_cache ) {
             self.isAuthenticated()
-            .done( function ( result ) {
-                $deferred.resolve( function () {
-                    return self.api.apply( self, arguments );
-                } );
+            .done( function ( api, result ) {
+                $deferred.resolve( api );
             } )
             .fail( function ( result ) {
                 popup();
@@ -766,7 +764,10 @@ var TemplateTwitterAPI = {
                     $deferred.reject( 'screen_name mismatch' );
                     return;
                 }
-                $deferred.resolve( json );
+                
+                $deferred.resolve( function () {
+                    return self.api.apply( self, arguments );
+                }, json );
             } )
             .fail( function () {
                 self.logout()
