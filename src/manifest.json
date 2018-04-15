@@ -1,7 +1,7 @@
 {
     "manifest_version" : 2,
     "name" : "example-twitter-oauth",
-    "version" : "0.1.1",
+    "version" : "0.1.3",
     "description" : "Browser Extension Twitter OAuth Example",
     "author" : "furyu",
     "permissions": [ "storage", "*://api.twitter.com/*" ],
@@ -26,5 +26,6 @@
             "run_at" : "document_end",
             "all_frames" : false
         }
-    ]
+    ],
+    "incognito" : "split"
 }
