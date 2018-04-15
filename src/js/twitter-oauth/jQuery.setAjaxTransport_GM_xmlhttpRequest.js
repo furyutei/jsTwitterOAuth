@@ -56,12 +56,16 @@ This script is based on
 
 'use strict';
 
-var VERSION = '0.1.1';
+var VERSION = '0.1.2';
 
 
 function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
     if ( ! dataType ) {
         dataType = '+*';
+        // - data types are separated by whitespace
+        // - '+' is a prefix meaning high priority
+        // - '*' is wild card of data type
+        // (e.g.: "json", "text html xml json", "+html +xml", "+*" )
     }
     
     
@@ -82,6 +86,14 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
             };
         } )(),
         
+        is_support_dataType = ( function () {
+            var reg_support_dataType = /^(?:|text|html|xml|json|binary)$/i;
+            
+            return function ( dataType ) {
+                return reg_support_dataType.test( dataType );
+            };
+        } )(),
+        
         // [jQuery.ajaxTransport() | jQuery API Documentation](http://api.jquery.com/jquery.ajaxtransport/)
         handler = function ( options, originalOptions, jqXHR ) {
             // options: the request options
@@ -93,6 +105,12 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                 ( ! is_support_type( options.type ) ) ||
                 ( ! is_support_url( options.url ) )
             ) {
+                return;
+            }
+            
+            var user_dataType = ( originalOptions.dataType || '' ).trim().toLowerCase();
+            
+            if ( ! is_support_dataType( user_dataType ) ) {
                 return;
             }
             
@@ -141,9 +159,7 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                             // onprogress: callback to be executed if the request made some progress
                             // onreadystatechange: callback to be executed if the request's ready state changed
                             // ontimeout: callback to be executed if the request failed due to a timeout
-                        },
-                        
-                        user_dataType = ( originalOptions.dataType || '' ).toLowerCase();
+                        };
                     
                     gm_details.method = options.type;
                     gm_details.url = options.url;
@@ -166,7 +182,12 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                         gm_details.context = originalOptions.context;
                     }
                     
-                    // gm_details.responseType = // TODO
+                    if ( originalOptions.responseType ) {
+                        gm_details.responseType = originalOptions.responseType;
+                    }
+                    else if ( user_dataType == 'binary' ) {
+                        gm_details.responseType = 'blob';
+                    }
                     
                     if ( typeof gm_overrideMimeType != 'undefined' ) {
                         gm_details.overrideMimeType = gm_overrideMimeType;
@@ -202,7 +223,9 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                             },
                             responses = {
                                 text: gm_response.responseText,
-                                xml : gm_response.responseXML
+                                xml : gm_response.responseXML,
+                                json : gm_response.responseJSON,
+                                binary : gm_response.response
                             };
                         
                         try {
@@ -215,7 +238,7 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                             if ( ( user_dataType == 'html' ) || /text\/html/i.test( gm_response_contentType ) ) {
                                 responses.html = gm_response.responseText;
                             }
-                            else if ( ( user_dataType == 'json' ) || ( ( user_dataType != 'text' ) && /\/json/i.test( gm_response_contentType ) ) ) {
+                            else if ( ( ! responses.json ) && ( ( user_dataType == 'json' ) || ( ( user_dataType != 'text' ) && /\/json/i.test( gm_response_contentType ) ) ) ) {
                                 try {
                                     responses.json = $.parseJSON( gm_response.responseText );
                                 }
@@ -225,7 +248,7 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                                     //throw 'Invalid JSON: ' + gm_response.responseText;
                                 }
                             }
-                            else if ( ( responses.xml ) && ( ( user_dataType == 'xml' ) || ( ( user_dataType != 'text' ) && /\/xml/i.test( gm_response_contentType ) ) ) ) {
+                            else if ( ( ! responses.xml ) && ( ( user_dataType == 'xml' ) || ( ( user_dataType != 'text' ) && /\/xml/i.test( gm_response_contentType ) ) ) ) {
                                 try {
                                     responses.xml = new DOMParser().parseFromString( gm_response.responseText, 'text/xml' );
                                 }
