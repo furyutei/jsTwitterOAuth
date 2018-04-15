@@ -5,6 +5,9 @@
     "description" : "Browser Extension Twitter OAuth Example",
     "author" : "furyu",
     "permissions": [ "storage", "*://api.twitter.com/*" ],
+    "web_accessible_resources": [
+        "html/callback.html"
+    ],
     "content_scripts" : [
         {
             "matches" : [
