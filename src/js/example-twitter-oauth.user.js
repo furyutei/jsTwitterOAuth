@@ -37,7 +37,8 @@ var TARGET_PAGE = 'https://furyutei.github.io/jsTwitterOAuth/example/',
 // Use parameters described on your [Twitter Application Management](https://apps.twitter.com/) {
 var CONSUMER_KEY = 'vcPW8q5vBXDoQG5Cgh39MUwvd',
     CONSUMER_SECRET = 'wCenoH2UYjwUjrCWHpA4bAKMuqPhJTgC6SSLWhWeL4nLcNlidj',
-    CALLBACK_URL = ( IS_BROWSER_EXTENSION && ( ! IS_FIREFOX ) ) ? browser.runtime.getURL( 'html/callback.html' ) : 'https://furyutei.github.io/jsTwitterOAuth/callback/';
+    CALLBACK_URL = 'https://furyutei.github.io/jsTwitterOAuth/callback/';
+    //CALLBACK_URL = ( IS_BROWSER_EXTENSION && ( ! IS_FIREFOX ) ) ? browser.runtime.getURL( 'html/callback.html' ) : 'https://furyutei.github.io/jsTwitterOAuth/callback/';
     // TODO: In Firefox, if you specify the URL obtained with browser.runtime.getURL() as a callback, it will not work. (Firefox 59.0.2)
     //  When redirected to the URL (for example, "moz-extension://.../html/callback.html?oauth_token=...&oauth_verifier=..."), the popup window will forget informations of the open side.
     //  - 'window.name' is changed to empty
