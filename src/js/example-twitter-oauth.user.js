@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            example-twitter-oauth
 // @description     Example UserScript for jsTwitterOAuth
-// @version         0.1.1
+// @version         0.1.2
 // @namespace       https://furyutei.github.io/jsTwitterOAuth
 // @author          furyu
 // @include         https://furyutei.github.io/jsTwitterOAuth/example/*
@@ -109,13 +109,44 @@ function show_wellcome( api ) {
             ].join( '' ).replace( /#user_name#/g, user_name ).replace( /#screen_name#/g, screen_name ),
             tweet_id,
             user_url = 'https://twitter.com/#screen_name#/'.replace( '#screen_name#', screen_name ),
-            tweet_url = user_url + 'status/#tweet_id#',
+            
             $info = $( '#info' ).empty(),
             $header = $( '<h2>Wellcome <a class="user_link"><span class="user_name"></span>(@<span class="screen_name"></span>)</a> !!&nbsp;&nbsp;<button class="logout">Logout</button></h2>' ),
             $logout_button = $header.find( 'button.logout' ).css( {
                 'cursor' : 'pointer'
             } ),
-            $tweet;
+            
+            get_tweet_gadget = function ( screen_name, tweet_info ) {
+                var tweet_url = 'https://twitter.com/#screen_name#/status/#tweet_id#',
+                    $tweet;
+                
+                try {
+                    tweet_id = tweet_info.id_str;
+                    tweet_date = new Date( tweet_info.created_at ).toLocaleString();
+                    tweet_url = tweet_url.replace( '#screen_name#', screen_name ).replace( '#tweet_id#', tweet_id );
+                    
+                    $tweet = $( tweet_html.replace( '#tweet_date#', tweet_date ) );
+                    $tweet.find( 'p[dir]' ).text( tweet_info.text );
+                    $tweet.find( 'a:last' ).attr( 'href', tweet_url );
+                }
+                catch ( error ) {
+                    $tweet = $( tweet_html );
+                    $tweet.siblings( '.tweet-container' ).html( '<p>(no tweet)</p>' );
+                }
+                
+                return $tweet;
+            },
+            
+            $tweet = get_tweet_gadget( screen_name, account_info.status ),
+            
+            $post_form = $( '<form id="post_form"><textarea name="status"></textarea><button class="post_button">Post status</button></form>' ),
+            $post_button = $post_form.find( 'button.post_button').css( {
+                'cursor' : 'pointer'
+            } ),
+            $post_status = $post_form.find( 'textarea[name="status"]' ).css( {
+                'width' : '540px',
+                'height' : '100px'
+            } );
         
         $header.find( 'a.user_link' ).attr( 'href', user_url );
         $header.find( '.user_name' ).text( user_name );
@@ -131,21 +162,32 @@ function show_wellcome( api ) {
             } );
         } );
         
-        try {
-            tweet_id = account_info.status.id_str;
-            tweet_date = new Date( account_info.status.created_at ).toLocaleString();
-            tweet_url = tweet_url.replace( '#screen_name#', screen_name ).replace( '#tweet_id#', tweet_id );
+        $post_button.on( 'click', function ( event ) {
+            event.stopPropagation();
+            event.preventDefault();
             
-            $tweet = $( tweet_html.replace( '#tweet_date#', tweet_date ) );
-            $tweet.find( 'p[dir]' ).text( account_info.status.text );
-            $tweet.find( 'a:last' ).attr( 'href', tweet_url );
-        }
-        catch ( error ) {
-            $tweet = $( tweet_html );
-            $tweet.siblings( '.tweet-container' ).html( '<p>(no tweet)</p>' );
-        }
+            $post_button.prop( 'disabled', true );
+            
+            post_status( api, $post_status.val() )
+            .done( function ( data, textStatus, jqXHR ) {
+                var $new_tweet = get_tweet_gadget( data.user.screen_name, data );
+                
+                $tweet.remove();
+                $post_form.before( $new_tweet );
+                
+                $tweet = $new_tweet;
+                $post_status.val( '' );
+                
+                $post_button.prop( 'disabled', false );
+            } )
+            .fail( function ( jqXHR, textStatus, errorThrown ) {
+                console.error( jqXHR, textStatus, errorThrown );
+                alert( 'Post failure: ' + jqXHR.status + ' ' + jqXHR.statusText );
+                $post_button.prop( 'disabled', false );
+            } );
+        } );
         
-        $info.append( $header, $tweet );
+        $info.append( $header, $tweet, $post_form );
     } )
     .fail( function ( error ) {
         alert( error );
@@ -196,6 +238,24 @@ function show_login_form() {
     
     $info.append( $header, $error_message );
 } // end of show_login_form()
+
+
+function post_status( api, status ) {
+    var $deferred = new $.Deferred(),
+        $promise = $deferred.promise();
+    
+    api( 'statuses/update', 'POST', {
+        status : status
+    } )
+    .done( function () {
+        $deferred.resolve.apply( this, arguments );
+    } )
+    .fail( function () {
+        $deferred.reject.apply( this, arguments );
+    } );
+    
+    return $promise;
+} // end of post_status()
 
 
 } )();
