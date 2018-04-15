@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            example-twitter-oauth
 // @description     Example UserScript for jsTwitterOAuth
-// @version         0.1.2
+// @version         0.1.3
 // @namespace       https://furyutei.github.io/jsTwitterOAuth
 // @author          furyu
 // @include         https://furyutei.github.io/jsTwitterOAuth/example/*
@@ -25,13 +25,25 @@
 
 'use strict';
 
+if ( ( typeof browser == 'undefined' ) && ( typeof window != 'undefined' ) ) {
+    window.browser = ( typeof chrome != 'undefined' ) ? chrome : null;
+}
+
 var TARGET_PAGE = 'https://furyutei.github.io/jsTwitterOAuth/example/',
-    AUTOSTART_AUTH_PROCESS_ON_PAGE_LOADED = false;
+    AUTOSTART_AUTH_PROCESS_ON_PAGE_LOADED = false,
+    IS_BROWSER_EXTENSION = ( browser && browser.runtime && ( typeof browser.runtime.getURL == 'function' ) ),
+    IS_FIREFOX = ( 0 <= navigator.userAgent.toLowerCase().indexOf( 'firefox' ) );
 
 // Use parameters described on your [Twitter Application Management](https://apps.twitter.com/) {
 var CONSUMER_KEY = 'vcPW8q5vBXDoQG5Cgh39MUwvd',
     CONSUMER_SECRET = 'wCenoH2UYjwUjrCWHpA4bAKMuqPhJTgC6SSLWhWeL4nLcNlidj',
-    CALLBACK_URL = 'https://furyutei.github.io/jsTwitterOAuth/callback/';
+    CALLBACK_URL = ( IS_BROWSER_EXTENSION && ( ! IS_FIREFOX ) ) ? browser.runtime.getURL( 'html/callback.html' ) : 'https://furyutei.github.io/jsTwitterOAuth/callback/';
+    // TODO: In Firefox, if you specify the URL obtained with browser.runtime.getURL() as a callback, it will not work. (Firefox 59.0.2)
+    //  When redirected to the URL (for example, "moz-extension://.../html/callback.html?oauth_token=...&oauth_verifier=..."), the popup window will forget informations of the open side.
+    //  - 'window.name' is changed to empty
+    //  - 'window.opener' is changed to null
+    //  - 'window.closed' becomes true only for a moment
+    //  Therefore, the opened side can not communicate with the popup window.
 //}
 
 
@@ -173,7 +185,7 @@ function show_wellcome( api ) {
                 var $new_tweet = get_tweet_gadget( data.user.screen_name, data );
                 
                 $tweet.remove();
-                $post_form.before( $new_tweet );
+                $post_form.after( $new_tweet );
                 
                 $tweet = $new_tweet;
                 $post_status.val( '' );
@@ -187,7 +199,7 @@ function show_wellcome( api ) {
             } );
         } );
         
-        $info.append( $header, $tweet, $post_form );
+        $info.append( $header, $post_form, $tweet );
     } )
     .fail( function ( error ) {
         alert( error );
