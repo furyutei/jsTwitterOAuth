@@ -209,17 +209,17 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                     //    completeCallback( 0, 'abort' );
                     //};
                     
-                    gm_details.onerror = function () {
-                        completeCallback( 500, 'error', {
-                            text: gm_details.responseText
-                        } );
+                    gm_details.onerror = function ( gm_response ) {
+                        completeCallback( gm_response.status, ( gm_response.statusText || '' ), {
+                            text: gm_response.responseText
+                        }, gm_response.responseHeaders );
                     };
                     
                     gm_details.onload = function ( gm_response ) {
                         var gm_response_contentType = '',
                             status = {
                                 code : gm_response.status,
-                                message : ( gm_response.status == 200 ) ? 'success' : ( ( gm_response.statusText ) ? gm_response.statusText : 'error' )
+                                message : ( gm_response.statusText || ( ( gm_response.status == 200 ) ? 'OK' : '' ) )
                             },
                             responses = {
                                 text: gm_response.responseText,
