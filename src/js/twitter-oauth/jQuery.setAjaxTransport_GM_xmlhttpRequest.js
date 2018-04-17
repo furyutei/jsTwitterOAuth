@@ -56,7 +56,7 @@ This script is based on
 
 'use strict';
 
-var VERSION = '0.1.2';
+var VERSION = '0.1.3';
 
 
 function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
@@ -90,7 +90,7 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
     
     
     var is_support_type = ( function () {
-            var reg_support_type = /^(?:GET|POST)/i;
+            var reg_support_type = /^(?:GET|POST|HEAD)/i;
             
             return function ( type ) {
                 return reg_support_type.test( type );
@@ -243,6 +243,12 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                     //};
                     
                     gm_details.onerror = function ( gm_response ) {
+                        if ( ! jqXHR.responseURL ) {
+                            jqXHR.responseURL = gm_response.finalUrl;
+                        }
+                        
+                        jqXHR.gm_response = gm_response;
+                        
                         completeCallback( gm_response.status, ( gm_response.statusText || '' ), {
                             text: gm_response.responseText
                         }, gm_response.responseHeaders );
@@ -296,6 +302,12 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                             throw error;
                         }
                         finally {
+                            if ( ! jqXHR.responseURL ) {
+                                jqXHR.responseURL = gm_response.finalUrl;
+                            }
+                            
+                            jqXHR.gm_response = gm_response;
+                            
                             completeCallback( status.code, status.message, responses, gm_response.responseHeaders );
                         }
                     };
