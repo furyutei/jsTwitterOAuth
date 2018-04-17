@@ -56,10 +56,10 @@ This script is based on
 
 'use strict';
 
-var VERSION = '0.1.3';
+var VERSION = '0.1.4';
 
 
-function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
+function setAjaxTransport_GM_xmlhttpRequest( $, dataType, same_scheme_restriction ) {
     var gm_xhr = ( function () {
         if ( ( typeof GM != 'undefined' ) && ( typeof GM.xmlHttpRequest == 'function' ) ) {
             return GM.xmlHttpRequest;
@@ -102,7 +102,7 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                 reg_support_protocol = /^https?:\/\//;
             
             return function ( url ) {
-                return reg_same_scheme.test( url ) && reg_support_protocol.test( url );
+                return ( ( ! same_scheme_restriction ) || reg_same_scheme.test( url ) ) && reg_support_protocol.test( url );
             };
         } )(),
         
