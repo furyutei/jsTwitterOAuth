@@ -60,6 +60,26 @@ var VERSION = '0.1.2';
 
 
 function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
+    var gm_xhr = ( function () {
+        if ( ( typeof GM != 'undefined' ) && ( typeof GM.xmlHttpRequest == 'function' ) ) {
+            return GM.xmlHttpRequest;
+        }
+        
+        if ( typeof GM_xmlhttpRequest == 'function' ) {
+            return GM_xmlhttpRequest;
+        }
+        
+        if ( typeof GM_xmlHttpRequest == 'function' ) {
+            return GM_xmlHttpRequest;
+        }
+        
+        return null;
+    } )();
+    
+    if ( ! gm_xhr ) {
+        return false;
+    }
+    
     if ( ! dataType ) {
         dataType = '+*';
         // - data types are separated by whitespace
@@ -117,13 +137,23 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
             var gm_ret = null,
                 gm_overrideMimeType,
                 orig_overrideMimeType = jqXHR.overrideMimeType;
-            
-            jqXHR.overrideMimeType = function ( mimeType ) {
-                orig_overrideMimeType.apply( jqXHR, arguments );
-                if ( typeof gm_overrideMimeType == 'function' ) {
-                    gm_overrideMimeType = mimeType;
-                }
-            };
+
+            switch ( typeof orig_overrideMimeType ) {
+                case 'function' :
+                    if ( /^function\s+__gm_extended_/.test( orig_overrideMimeType.toString() ) ) {
+                        break;
+                    }
+                    
+                    jqXHR.overrideMimeType = function __gm_extended_overrideMimeType ( mimeType ) {
+                        gm_overrideMimeType = mimeType;
+                        orig_overrideMimeType.apply( jqXHR, arguments );
+                    };
+                    break;
+                
+                case 'string' :
+                    gm_overrideMimeType = orig_overrideMimeType;
+                    break;
+            }
             
             return {
                 send : function ( headers, completeCallback ) {
@@ -191,6 +221,9 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                     
                     if ( typeof gm_overrideMimeType != 'undefined' ) {
                         gm_details.overrideMimeType = gm_overrideMimeType;
+                    }
+                    else {
+                        gm_details.overrideMimeType = originalOptions.mimeType || originalOptions.overrideMimeType;
                     }
                     
                     if ( originalOptions.crossDomain ) {
@@ -275,7 +308,7 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
                         completeCallback( 500, 'timeout' );
                     };
                     
-                    gm_ret = GM_xmlhttpRequest( gm_details );
+                    gm_ret = gm_xhr( gm_details );
                 },
                 
                 abort : function () {
@@ -322,7 +355,7 @@ function setAjaxTransport_GM_xmlhttpRequest( $, dataType ) {
         factory( global_object.jQuery );
     }
 } )( function ( $ ) {
-    if ( ( ! $ ) || ( typeof $.ajaxTransport != 'function' ) || ( typeof GM_xmlhttpRequest != 'function' ) ) {
+    if ( ( ! $ ) || ( typeof $.ajaxTransport != 'function' ) ) {
         return $;
     }
     
